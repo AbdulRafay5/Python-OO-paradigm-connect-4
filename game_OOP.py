@@ -2,6 +2,35 @@ ROWS = 6
 COLS = 7
 
 board = [['.' for _ in range(COLS)] for _ in range(ROWS)]
+
+def win_condition(board, row, col):
+    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+    players = ["H", "A"]
+    
+    for player in players:
+        for dr, dc in directions:
+            count = 1
+            
+            # Check positive direction
+            r, c = row + dr, col + dc
+            while 0 <= r < ROWS and 0 <= c < COLS and board[r][c] == player:
+                count += 1
+                r += dr
+                c += dc
+            
+            # Check negative direction
+            r, c = row - dr, col - dc
+            while 0 <= r < ROWS and 0 <= c < COLS and board[r][c] == player:
+                count += 1
+                r -= dr
+                c -= dc
+            
+            if count >= 4:
+                return True, player
+    
+    return False, None
+
+
 def is_valid_location(board, col):
     return board[ROWS-1][col] == '.'
 
@@ -40,8 +69,29 @@ def print_board(board):
         print("")
     print("")
 
-def main():
-    print_board(board)
 
+def main():
+    turn = 'H'
+    
+    while True:
+        print_board(board)
+        
+        if turn == 'H':
+            col = int(input("Enter column number: "))
+            if is_valid_location(board, col):
+                row, col = update(board, col, turn)
+                
+                # Check win
+                b, w = win_condition(board, row, col)
+                if b:
+                    print_board(board)
+                    print(w, "wins!")
+                    break
+                
+                turn = 'A'
+        else:
+            # AI will be added later
+            turn = 'H'
 if __name__ == "__main__":
+
     main()

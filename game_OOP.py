@@ -1,132 +1,122 @@
-ROWS = 6
-COLS = 7
+import math
+import random
 
-board = [['.' for _ in range(COLS)] for _ in range(ROWS)]
+class Connect4Game:
+    ROWS = 6
+    COLS = 7
 
-def is_valid_location(board, col):
-    return board[ROWS-1][col] == '.'
+    def __init__(self):
+        self.board = [['.' for _ in range(self.COLS)] for _ in range(self.ROWS)]
+        self.turn = 'H'  # Start with human
 
-def get_next_open_row(board, col):
-    for r in range(ROWS):
-        if board[r][col] == '.':
-            return r
-    return None
-
-def score_position(board, player):
-    score = 0
-    # For brevity, implement simple scoring or just return 0
-    return score
-
-def minimax(board, depth, maximizingPlayer):
-    valid_cols = [c for c in range(COLS) if is_valid_location(board, c)]
-
-    # Base case: check for terminal states
-    for col in valid_cols:
-        row = get_next_open_row(board, col)
-        b, winner = win_condition(board, row, col)
-        if b:
-            if winner == 'A':
-                return col, 1000000
-            elif winner == 'H':
-                return col, -1000000
-
-    if depth == 0 or not valid_cols:
-        return valid_cols[0], score_position(board, 'A')
-
-    if maximizingPlayer:
-        value = -float('inf')
-        best_col = valid_cols[0]
-        for col in valid_cols:
-            row = get_next_open_row(board, col)
-            board[row][col] = 'A'
-            _, new_score = minimax(board, depth-1, False)
-            board[row][col] = '.'
-            if new_score > value:
-                value = new_score
-                best_col = col
-        return best_col, value
-    else:
-        value = float('inf')
-        best_col = valid_cols[0]
-        for col in valid_cols:
-            row = get_next_open_row(board, col)
-            board[row][col] = 'H'
-            _, new_score = minimax(board, depth-1, True)
-            board[row][col] = '.'
-            if new_score < value:
-                value = new_score
-                best_col = col
-        return best_col, value
-
-def print_board(board):
-    for i in range(ROWS - 1, -1, -1):
-        for j in range(0, COLS):
-            print(board[i][j], end=" ")
+    def print_board(self, board=None):
+        if board is None:
+            board = self.board
+        for i in range(self.ROWS - 1, -1, -1):
+            for j in range(self.COLS):    
+                print(board[i][j], end=" ")
+            print("")
         print("")
-    print("")
 
-def update(board, col):
-    for i in range(0, ROWS):
-        if board[i][col] == ".":
-            board[i][col] = "H"
-            return i, col
-    return None, col
+    def is_valid_location(self, board, col):
+        return board[self.ROWS-1][col] == '.'
 
-def win_condition(board, row, col):
-    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
-    players = ["H", "A"]
+    def get_next_open_row(self, board, col):
+        for r in range(self.ROWS):
+            if board[r][col] == '.':
+                return r
+        return None
 
-    for player in players:
-        for dr, dc in directions:
-            count = 1
+    def drop_piece(self, board, row, col, piece):
+        board[row][col] = piece
 
-            # Check positive direction
-            r, c = row + dr, col + dc
-            while 0 <= r < ROWS and 0 <= c < COLS and board[r][c] == player:
-                count += 1
-                r += dr
-                c += dc
+    def win_condition(self, board, row, col):
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        players = ["H", "A"]
 
-            # Check negative direction
-            r, c = row - dr, col - dc
-            while 0 <= r < ROWS and 0 <= c < COLS and board[r][c] == player:
-                count += 1
-                r -= dr
-                c -= dc
-
-            if count >= 4:
-                return True, player
-
-    return False, None
-
-def main():
-    turn = 'H'
-
-    while True:
-        print_board(board)
-
-        if turn == 'H':
-            col = int(input("Enter column number: "))
-            if 0 <= col < COLS and is_valid_location(board, col):
-                row, col = update(board, col)
-            else:
-                print("Invalid move. Try again.")
+        for player in players:
+            # Check if we can check for this player:
+            # 1. If tile is empty ('.'), we are checking hypothetically for Minimax
+            # 2. If tile is occupied, it must match the player we are checking
+            if board[row][col] != '.' and board[row][col] != player:
                 continue
-        else:
-            col, _ = minimax(board, depth=3, maximizingPlayer=True)
-            row = get_next_open_row(board, col)
-            board[row][col] = 'A'
-            print(f"AI plays column {col}")
 
-        # Check win
-        b, w = win_condition(board, row, col)
-        if b:
-            print_board(board)
-            print(w, "wins!")
-            break
+            for dr, dc in directions:
+                count = 1  # include current piece
 
-        # Switch turn
-        turn = 'A' if turn == 'H' else 'H'
+                # Check positive direction
+                r, c = row + dr, col + dc
+                while 0 <= r < self.ROWS and 0 <= c < self.COLS and board[r][c] == player:
+                    count += 1
+                    r += dr
+                    c += dc
+
+                # Check negative direction
+                r, c = row - dr, col - dc
+                while 0 <= r < self.ROWS and 0 <= c < self.COLS and board[r][c] == player:
+                    count += 1
+                    r -= dr
+                    c -= dc
+
+                if count >= 4:
+                    return True, player
+
+        return False, None
+
+    def play(self):
+        # Local import to avoid circular dependency if game_AI imports game_OOP (it doesn't, but safer)
+        from game_AI import Connect4AI
+        ai = Connect4AI(self)
+        
+        print("Starting Connect 4 Game (OOP)")
+        
+        while True:
+            self.print_board()
+
+            if self.turn == 'H':
+                try:
+                    col_input = input("Enter column number (0-6): ")
+                    col = int(col_input)
+                    if not (0 <= col < self.COLS):
+                        print("Invalid column range.")
+                        continue
+                    if not self.is_valid_location(self.board, col):
+                        print("Column full.")
+                        continue
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+                    continue
+                
+                row = self.get_next_open_row(self.board, col)
+                self.drop_piece(self.board, row, col, 'H')
+            else:
+                print("AI is thinking...")
+                col, _ = ai.minimax(self.board, depth=3, maximizingPlayer=True)
+                
+                if col is None: 
+                    print("Game Over. Draw!")
+                    break
+                    
+                row = self.get_next_open_row(self.board, col)
+                self.drop_piece(self.board, row, col, 'A')
+                print(f"AI plays column {col}")
+
+            # Check win
+            b, w = self.win_condition(self.board, row, col)
+            if b:
+                self.print_board()
+                print(w, "wins!")
+                break
+            
+            # Check draw
+            if all(not self.is_valid_location(self.board, c) for c in range(self.COLS)):
+                 self.print_board()
+                 print("Game Over. Draw!")
+                 break
+
+            # Switch turn
+            self.turn = 'A' if self.turn == 'H' else 'H'
 
 if __name__ == "__main__":
-    main()
+    game = Connect4Game()
+    game.play()

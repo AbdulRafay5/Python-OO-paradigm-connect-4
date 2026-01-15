@@ -24,6 +24,51 @@ def simple_ai_move(board):
         return valid_cols[0]
     return 0
 
+import sys
+
+def minimax(board, depth, maximizingPlayer):
+    valid_cols = [c for c in range(COLS) if is_valid_location(board, c)]
+    
+    # Base case: check for terminal states
+    for col in valid_cols:
+        row = get_next_open_row(board, col)
+        if row is not None:
+            b, winner = win_condition(board, row, col)
+            if b:
+                if winner == 'A':
+                    return col, 1000000
+                elif winner == 'H':
+                    return col, -1000000
+    
+    if depth == 0 or not valid_cols:
+        return valid_cols[0] if valid_cols else 0, score_position(board, 'A')
+    
+    if maximizingPlayer:
+        value = -sys.maxsize
+        best_col = valid_cols[0]
+        for col in valid_cols:
+            row = get_next_open_row(board, col)
+            board[row][col] = 'A'
+            _, new_score = minimax(board, depth-1, False)
+            board[row][col] = '.'
+            if new_score > value:
+                value = new_score
+                best_col = col
+        return best_col, value
+    else:
+        value = sys.maxsize
+        best_col = valid_cols[0]
+        for col in valid_cols:
+            row = get_next_open_row(board, col)
+            board[row][col] = 'H'
+            _, new_score = minimax(board, depth-1, True)
+            board[row][col] = '.'
+            if new_score < value:
+                value = new_score
+                best_col = col
+        return best_col, value
+
+
 
 def win_condition(board, row, col):
     directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
@@ -101,7 +146,7 @@ def main():
         
         if turn == 'H':
             col = int(input("Enter column number: "))
-            if is_valid_location(board, col):
+            if 0 <= col < COLS and is_valid_location(board, col):
                 row, col = update(board, col, turn)
                 
                 # Check win
@@ -113,7 +158,7 @@ def main():
                 
                 turn = 'A'
         else:
-            col = simple_ai_move(board)
+            col, _ = minimax(board, depth=3, maximizingPlayer=True)
             row = get_next_open_row(board, col)
             board[row][col] = 'A'
             print(f"AI plays column {col}")
@@ -128,8 +173,8 @@ def main():
             turn = 'H'
 
 
-
 if __name__ == "__main__":
 
     main()
+
 

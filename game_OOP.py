@@ -3,6 +3,28 @@ COLS = 7
 
 board = [['.' for _ in range(COLS)] for _ in range(ROWS)]
 
+def score_position(board, player):
+    # Simple scoring for now
+    score = 0
+    # Basic center preference
+    center_col = COLS // 2
+    for r in range(ROWS):
+        if board[r][center_col] == player:
+            score += 3
+    return score
+
+def simple_ai_move(board):
+    # Prefer center, then random valid column
+    center_col = COLS // 2
+    if is_valid_location(board, center_col):
+        return center_col
+    
+    valid_cols = [c for c in range(COLS) if is_valid_location(board, c)]
+    if valid_cols:
+        return valid_cols[0]
+    return 0
+
+
 def win_condition(board, row, col):
     directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
     players = ["H", "A"]
@@ -70,6 +92,7 @@ def print_board(board):
     print("")
 
 
+
 def main():
     turn = 'H'
     
@@ -90,8 +113,23 @@ def main():
                 
                 turn = 'A'
         else:
-            # AI will be added later
+            col = simple_ai_move(board)
+            row = get_next_open_row(board, col)
+            board[row][col] = 'A'
+            print(f"AI plays column {col}")
+            
+            # Check win
+            b, w = win_condition(board, row, col)
+            if b:
+                print_board(board)
+                print(w, "wins!")
+                break
+            
             turn = 'H'
+
+
+
 if __name__ == "__main__":
 
     main()
+
